@@ -1,0 +1,51 @@
+# Deployment manifest
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pizza-time
+  labels:
+    app: pizza-time
+spec:
+  replicas: 5
+  selector:
+      matchLabels:
+          app: pizza-time
+  template:
+    metadata:
+      labels:
+        app: pizza-time
+    spec:
+      containers:
+      - name: pizza-time
+        image: roeef/pizza_time
+        imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 8080
+        securityContext:
+          runAsUser: 1000
+          privileged: false
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 5
+
+# Service manifest
+# On a real cluster, we would like to use a load balancer service
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pizza-time-service
+spec:
+  type: NodePort
+  selector:
+    app: pizza-time
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+    nodePort: 30646
